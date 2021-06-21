@@ -88,6 +88,10 @@ shards:
     git: https://github.com/amberframework/micrate.git
     version: 0.11.0
 
+  myhtml:
+    git: https://github.com/kostya/myhtml.git
+    version: 1.5.6
+
   mysql:
     git: https://github.com/crystal-lang/crystal-mysql.git
     version: 0.13.0

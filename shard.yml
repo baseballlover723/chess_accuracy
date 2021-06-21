@@ -41,6 +41,10 @@ dependencies:
     github: dare892/citrine-i18n
     version: ~> 1.0.0
 
+  myhtml:
+    github: kostya/myhtml
+    version: ~> 1.5
+
 development_dependencies:
   garnet_spec:
     github: amberframework/garnet-spec
