@@ -11,6 +11,8 @@ license: MIT
 targets:
   chess_accuracy:
     main: src/chess_accuracy.cr
+  analyze:
+    main: src/analyze.cr
 
   amber:
     main: lib/amber/src/amber/cli.cr

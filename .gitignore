@@ -12,3 +12,6 @@ production.yml
 /node_modules
 /public/dist
 .envrc
+
+src/analyze.cr
+src/clients/login_client.cr
