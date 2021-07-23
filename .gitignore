@@ -13,5 +13,6 @@ production.yml
 /public/dist
 .envrc
 
+*.log
 src/analyze.cr
 src/clients/login_client.cr
