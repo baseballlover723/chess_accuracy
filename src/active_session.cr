@@ -1,20 +1,27 @@
 require "./clients/login_client"
 
 class ActiveSession
-  @@instance = ActiveSession.new("", "")
+  @@instance = ActiveSession.new({} of String => String)
 
-  property key : String
-  property value : String
+  property headers : Hash(String, String)
 
-  def initialize(@key : String, @value : String)
+  def initialize(@headers : Hash(String, String))
+  end
+
+  def initialize(str_headers : String)
+    @headers = Hash(String, String).from_json(str_headers)
   end
 
   def self.set(session : ActiveSession) : ActiveSession
     @@instance = session
   end
 
-  def self.set(key : String, value : String) : ActiveSession
-    @@instance = ActiveSession.new(key, value)
+  def self.set(headers : Hash(String, String)) : ActiveSession
+    @@instance = ActiveSession.new(headers)
+  end
+
+  def self.set(str_headers : String) : ActiveSession
+    @@instance = ActiveSession.new(str_headers)
   end
 
   def self.get : ActiveSession
@@ -22,7 +29,6 @@ class ActiveSession
   end
 
   def headers : HTTP::Headers
-    cookies = {key => value}
-    HTTP::Headers{"cookie" => cookies.join { |key, value| key + "=" + value + "; " }}
+    HTTP::Headers{"cookie" => @headers.join { |key, value| key + "=" + value + "; " }}
   end
 end

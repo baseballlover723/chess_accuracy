@@ -104,6 +104,5 @@ Amber::Server.configure do |settings|
   # settings.session = { "key" => "amber.session", "store" => "signed_cookie", "expires" => 0 }
   #
 
-  settings.secrets["session_key"] = ENV["SESSION_KEY"] if ENV["SESSION_KEY"]?
-  settings.secrets["session_value"] = ENV["SESSION_VALUE"] if ENV["SESSION_VALUE"]?
+  settings.secrets["auth_headers"] = ENV["AUTH_HEADERS"] if ENV["AUTH_HEADERS"]?
 end
