@@ -6,14 +6,17 @@ require "../active_session"
 require "../dtos/color"
 require "../dtos/proto_game_color"
 require "../dtos/proto_game"
+require "../fiber_pool"
 require "../timer"
 
 class ArchiveClient
   URL             = "https://www.chess.com/games/archive/"
   DEFAULT_OPTIONS = {"rated" => "rated"}
   # CONCURRENT_REQUESTS = 16
-  # CONCURRENT_REQUESTS = 4
-  CONCURRENT_REQUESTS = 1
+  CONCURRENT_REQUESTS = 4
+  # CONCURRENT_REQUESTS = 1
+
+  @@pool = FiberPool(String, HTTP::Client::Response).new(CONCURRENT_REQUESTS)
 
   # returns full game objects, id, time_control, your color, accuracy, rating, opening, datetime, moves, name, etc... (full db object, get more info from offical api)
   def self.get_games(username : String, options = {} of String => String) : Array(ProtoGame)
@@ -21,30 +24,40 @@ class ArchiveClient
     games = [] of ProtoGame
     page = 1
 
+    # loop do
+    #   channel = Channel(Array(ProtoGame)).new
+    #   any_not_full = false
+
+    #   {% for offset in 0...CONCURRENT_REQUESTS %}
+    #     spawn_call(username, options, page, channel, {{offset}})
+    #   {% end %}
+
+    #   {% for offset in 0...CONCURRENT_REQUESTS %}
+    #     new_games = channel.receive
+    #     games.concat(new_games)
+    #     any_not_full = true if new_games.size != 50
+    #   {% end %}
+
+    #   page += CONCURRENT_REQUESTS
+
+    #   # new_games = get_page(username, options, page)
+    #   # page += 1
+
+    #   # games.concat(new_games)
+
+    #   break if any_not_full
+    #   # break
+    #   # break if new_games.size != 50
+    # end
+
+    # TODO doesn't use full bandwidth for a single user, probably properly thottles multiple users though
+    # something something, maybe make a queue function on fiber pool, returning the return channel?
+    # something something, spwan a thread, and
     loop do
-      channel = Channel(Array(ProtoGame)).new
-      any_not_full = false
-
-      {% for offset in 0...CONCURRENT_REQUESTS %}
-        spawn_call(username, options, page, channel, {{offset}})
-      {% end %}
-
-      {% for offset in 0...CONCURRENT_REQUESTS %}
-        new_games = channel.receive
-        games.concat(new_games)
-        any_not_full = true if new_games.size != 50
-      {% end %}
-
-      page += CONCURRENT_REQUESTS
-
-      # new_games = get_page(username, options, page)
-      # page += 1
-
-      # games.concat(new_games)
-
-      break if any_not_full
-      # break
-      # break if new_games.size != 50
+      new_games = get_page(username, options, page)
+      page += 1
+      games.concat(new_games)
+      break if new_games.size != 50
     end
 
     games
@@ -68,10 +81,13 @@ class ArchiveClient
     puts "getting url: #{url}" # DEBUG
     response = Timer.exclude(:processing) do
       Timer.time(:http) do
-        HTTP::Client.get(url, headers: ActiveSession.get.headers)
+        @@pool.run(url) do |url|
+          HTTP::Client.get(url, headers: ActiveSession.get.headers)
+        end
       end
     end
     puts response.status_code # DEBUG
+    puts response.inspect if response.status_code == 302
     Timer.time(:html_processing) do
       parse_html_games(response.body)
     end
